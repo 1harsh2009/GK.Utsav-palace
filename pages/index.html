@@ -186,7 +186,8 @@
     e.preventDefault()
     axios.get(`/reg/${user}/${email}`)
     user = ""
-    email =""
+    email = ""
+    btn.innerHTML = "<h1>Infomation submit</h1>"
   })
 </script>
 <script src="layout/scripts/jquery.min.js"></script>
