@@ -87,7 +87,7 @@ ex.post('/admin/login', passport.authenticate('local', {
     failureRedirect: '/admin',
 }));
 
-ex.get("/admin/dashboard", isLoggedIn, async (req, res) => {
+ex.get("/admin/dashboard", isLoggedIn,async (req, res) => {
     try {
         const users = await User.find();
         res.render("index", { users });
