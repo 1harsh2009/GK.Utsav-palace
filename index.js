@@ -2,7 +2,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const ex = express();
 const path = require('path');
-const User = require("./userModel"); // Import the User model
+const User = require("./userModel");
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const session = require('express-session'); // Add this line
+const bcrypt = require('bcrypt')
 
 
 ex.set('view engine', 'ejs');
@@ -10,48 +14,111 @@ ex.set('view engine', 'ejs');
 const uri = "mongodb+srv://harshuu001:harsh@cluster0.flyzgd7.mongodb.net/your_database_name?retryWrites=true&w=majority";
 
 mongoose.connect(uri, {
-    useNewUrlParser: true
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
 });
-// appendFile.get("/",function(req,res){
-//     res.redirect("/index")
-// })
+
 ex.use(express.static(path.join(__dirname, 'pages')));
+ex.use(express.urlencoded({ extended: true }));
+ex.use(express.json());
 
-ex.get("/dashboard", async function (req, res) {
+// Add express-session middleware
+ex.use(session({
+    secret: 'your-secret-key', // Change this to a secret key
+    resave: false,
+    saveUninitialized: false
+}));
+
+passport.use(new LocalStrategy(async (username, password, done) => {
     try {
-        // Fetch all users from the database
-        const users = await User.find();
+        const AdminName = 'Admin';
+        const AdminPass = 'Admin123';
 
-        // Render the "index" view with the fetched user data
+        if (username === AdminName) {
+            if(password == AdminPass){
+                return done(null, { username: AdminName });
+            }
+
+        }
+
+        return done(null, false, { message: 'Invalid credentials' });
+
+    } catch (err) {
+        return done(err);
+    }
+}));
+
+passport.serializeUser((user, done) => {
+    done(null, user.username);
+});
+
+passport.deserializeUser((username, done) => {
+    done(null, { username });
+});
+
+ex.use(passport.initialize());
+ex.use(passport.session());
+
+ex.get("/admin", (req, res) => {
+    res.render('Login');
+});
+
+ex.get('/reviewed/:Id', async function(req, res) {
+    try {
+        // Assuming you have a Mongoose model named 'User'
+        const user = await User.findOneAndUpdate(
+            { _id: req.params.Id },
+            { $set: { Reviwed: 'Yes' } }
+        );
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        res.redirect('/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+ex.post('/admin/login', passport.authenticate('local', {
+    successRedirect: '/admin/dashboard',
+    failureRedirect: '/admin',
+}));
+
+ex.get("/admin/dashboard", isLoggedIn, async (req, res) => {
+    try {
+        const users = await User.find();
         res.render("index", { users });
     } catch (error) {
-        // Handle errors
         console.error(error);
         res.status(500).send("Internal Server Error");
     }
 });
 
-
-ex.get("/reg/:name/:email/:number", async function(req, res) {
+ex.get("/reg/:name/:email/:number", async (req, res) => {
     try {
-        // Create a new user instance
         const newUser = new User({
             name: req.params.name,
             email: req.params.email,
-            number:req.params.number
+            number: req.params.number
         });
 
-        // Save the user to the database
         const savedUser = await newUser.save();
-
-        // Send a response
         res.send(savedUser);
     } catch (error) {
-        // Handle errors
         console.error(error);
         res.status(500).send("Internal Server Error");
     }
 });
+
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.redirect('/admin');
+}
 
 ex.listen(3000, () => {
     console.log("server running on port 3000");
