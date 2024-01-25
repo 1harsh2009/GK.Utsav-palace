@@ -60,7 +60,7 @@ ex.use(passport.initialize());
 ex.use(passport.session());
 
 ex.get("/admin", (req, res) => {
-    res.render('login');
+    res.render('loginP');
 });
 
 ex.get('/reviewed/:Id', async function(req, res) {
