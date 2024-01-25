@@ -6,7 +6,7 @@ const User = require("./userModel");
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session'); // Add this line
-const bcrypt = require('bcrypt')
+
 
 
 ex.set('view engine', 'ejs');
