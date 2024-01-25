@@ -9,7 +9,9 @@ const uri = "mongodb+srv://harshuu001:harsh@cluster0.flyzgd7.mongodb.net/your_da
 mongoose.connect(uri, {
     useNewUrlParser: true
 });
-
+// appendFile.get("/",function(req,res){
+//     res.redirect("/index")
+// })
 ex.use(express.static(path.join(__dirname, 'pages')));
 
 ex.get("/reg/:name/:email", async function(req, res) {
