@@ -8,7 +8,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session'); // Add this line
 
 
-
+ex.set('views', path.join(__dirname, 'views'));
 ex.set('view engine', 'ejs');
 
 const uri = "mongodb+srv://harshuu001:harsh@cluster0.flyzgd7.mongodb.net/your_database_name?retryWrites=true&w=majority";
