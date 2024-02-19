@@ -107,30 +107,30 @@ ex.get("/reg/:name/:email/:number", async (req, res) => {
             number: req.params.number
         });
         // Create a transporter using your email service provider's SMTP settings
-        // const transporter = nodemailer.createTransport({
-        //     service: 'gmail',
-        //     auth: {
-        //     user: 'your_email@gmail.com',
-        //     pass: 'your_email_password'
-        //     }
-        // });
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+            user: 'gkutsavpalaceoffical@gmail.com',
+            pass: 'harsh-123@'
+            }
+        });
         
-        // // Define the email options
-        // const mailOptions = {
-        //     from: 'your_email@gmail.com',
-        //     to: 'recipient_email@example.com',
-        //     subject: `user name:${req.params.name}`,
-        //     text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
-        // };
+        // Define the email options
+        const mailOptions = {
+            from: 'gkutsavpalaceoffical@gmail.com',
+            to: 'gkutsavpalaceoffical@gmail.com',
+            subject: `user name:${req.params.name}`,
+            text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
+        };
         
-        // // Send the email
-        // transporter.sendMail(mailOptions, (error, info) => {
-        //     if (error) {
-        //     console.error('Error:', error);
-        //     } else {
-        //     console.log('Email sent:', info.response);
-        //     }
-        // });
+        // Send the email
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+            console.error('Error:', error);
+            } else {
+            console.log('Email sent:', info.response);
+            }
+        });
           
         const savedUser = await newUser.save();
         res.send(savedUser);
