@@ -6,6 +6,8 @@ const User = require("./userModel");
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session'); // Add this line
+const nodemailer = require('nodemailer');
+
 
 
 ex.set('views', path.join(__dirname, 'views'));
@@ -104,13 +106,39 @@ ex.get("/reg/:name/:email/:number", async (req, res) => {
             email: req.params.email,
             number: req.params.number
         });
-
+        // Create a transporter using your email service provider's SMTP settings
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+            user: 'your_email@gmail.com',
+            pass: 'your_email_password'
+            }
+        });
+        
+        // Define the email options
+        const mailOptions = {
+            from: 'your_email@gmail.com',
+            to: 'recipient_email@example.com',
+            subject: `user name:${req.params.name}`,
+            text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
+        };
+        
+        // Send the email
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+            console.error('Error:', error);
+            } else {
+            console.log('Email sent:', info.response);
+            }
+        });
+          
         const savedUser = await newUser.save();
         res.send(savedUser);
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
     }
+
 });
 
 function isLoggedIn(req, res, next) {
