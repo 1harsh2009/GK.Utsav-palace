@@ -5,10 +5,8 @@ const path = require('path');
 const User = require("./userModel");
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-const session = require('express-session'); // Add this line
+const session = require('express-session');
 const nodemailer = require('nodemailer');
-
-
 
 ex.set('views', path.join(__dirname, 'views'));
 ex.set('view engine', 'ejs');
@@ -24,9 +22,8 @@ ex.use(express.static(path.join(__dirname, 'pages')));
 ex.use(express.urlencoded({ extended: true }));
 ex.use(express.json());
 
-// Add express-session middleware
 ex.use(session({
-    secret: 'your-secret-key', // Change this to a secret key
+    secret: 'your-secret-key',
     resave: false,
     saveUninitialized: false
 }));
@@ -37,10 +34,9 @@ passport.use(new LocalStrategy(async (username, password, done) => {
         const AdminPass = 'Admin123';
 
         if (username === AdminName) {
-            if(password == AdminPass){
+            if (password === AdminPass) {
                 return done(null, { username: AdminName });
             }
-
         }
 
         return done(null, false, { message: 'Invalid credentials' });
@@ -61,16 +57,23 @@ passport.deserializeUser((username, done) => {
 ex.use(passport.initialize());
 ex.use(passport.session());
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'gkutsavpalaceoffical@gmail.com',
+        pass: 'harsh-123@'
+    }
+});
+
 ex.get("/admin", (req, res) => {
     res.render('loginP');
 });
 
 ex.get('/reviewed/:Id', async function(req, res) {
     try {
-        // Assuming you have a Mongoose model named 'User'
         const user = await User.findOneAndUpdate(
             { _id: req.params.Id },
-            { $set: { Reviwed: 'Yes' } }
+            { $set: { Reviewed: 'Yes' } }
         );
 
         if (!user) {
@@ -89,7 +92,7 @@ ex.post('/admin/login', passport.authenticate('local', {
     failureRedirect: '/admin',
 }));
 
-ex.get("/admin/dashboard", isLoggedIn,async (req, res) => {
+ex.get("/admin/dashboard", isLoggedIn, async (req, res) => {
     try {
         const users = await User.find();
         res.render("index", { users });
@@ -106,39 +109,28 @@ ex.get("/reg/:name/:email/:number", async (req, res) => {
             email: req.params.email,
             number: req.params.number
         });
-        // Create a transporter using your email service provider's SMTP settings
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-            user: 'gkutsavpalaceoffical@gmail.com',
-            pass: 'harsh-123@'
-            }
-        });
-        
-        // Define the email options
+
         const mailOptions = {
             from: 'gkutsavpalaceoffical@gmail.com',
             to: 'gkutsavpalaceoffical@gmail.com',
             subject: `user name:${req.params.name}`,
             text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
         };
-        
-        // Send the email
+
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-            console.error('Error:', error);
+                console.error('Error sending email:', error);
+                res.status(500).send('Error sending email');
             } else {
-            console.log('Email sent:', info.response);
+                console.log('Email sent:', info.response);
+                const savedUser = newUser.save();
+                res.send(savedUser);
             }
         });
-          
-        const savedUser = await newUser.save();
-        res.send(savedUser);
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
     }
-
 });
 
 function isLoggedIn(req, res, next) {
