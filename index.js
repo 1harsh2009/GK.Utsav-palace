@@ -57,13 +57,13 @@ passport.deserializeUser((username, done) => {
 ex.use(passport.initialize());
 ex.use(passport.session());
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'gkutsavpalaceoffical@gmail.com',
-        pass: 'harsh-123@'
-    }
-});
+// const transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//         user: 'gkutsavpalaceoffical@gmail.com',
+//         pass: 'harsh-123@'
+//     }
+// });
 
 ex.get("/admin", (req, res) => {
     res.render('loginP');
@@ -110,23 +110,23 @@ ex.get("/reg/:name/:email/:number", async (req, res) => {
             number: req.params.number
         });
 
-        const mailOptions = {
-            from: 'gkutsavpalaceoffical@gmail.com',
-            to: 'gkutsavpalaceoffical@gmail.com',
-            subject: `user name:${req.params.name}`,
-            text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
-        };
+        // const mailOptions = {
+        //     from: 'gkutsavpalaceoffical@gmail.com',
+        //     to: 'gkutsavpalaceoffical@gmail.com',
+        //     subject: `user name:${req.params.name}`,
+        //     text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
+        // };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Error sending email:', error);
-                res.status(500).send('Error sending email');
-            } else {
-                console.log('Email sent:', info.response);
-                const savedUser = newUser.save();
-                res.send(savedUser);
-            }
-        });
+        // transporter.sendMail(mailOptions, (error, info) => {
+        //     if (error) {
+        //         console.error('Error sending email:', error);
+        //         res.status(500).send('Error sending email');
+        //     } else {
+        //         console.log('Email sent:', info.response);
+        //         const savedUser = newUser.save();
+        //         res.send(savedUser);
+        //     }
+        // });
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
