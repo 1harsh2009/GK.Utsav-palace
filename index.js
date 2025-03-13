@@ -80,7 +80,7 @@ ex.get('/reviewed/:Id', async function (req, res) {
 
         const user = await User.findOneAndUpdate(
             { _id: req.params.Id },
-            { $set: { Reviewed: 'Yes' } },
+            { $set: { Reviwed: 'Yes' } },
             { new: true }  // Returns the updated document
         );
 
