@@ -69,11 +69,19 @@ ex.get("/admin", (req, res) => {
     res.render('loginP');
 });
 
-ex.get('/reviewed/:Id', async function(req, res) {
+const { ObjectId } = mongoose.Types;
+
+ex.get('/reviewed/:Id', async function (req, res) {
     try {
+        // Validate ObjectId
+        if (!ObjectId.isValid(req.params.Id)) {
+            return res.status(400).send('Invalid User ID');
+        }
+
         const user = await User.findOneAndUpdate(
             { _id: req.params.Id },
-            { $set: { Reviewed: 'Yes' } }
+            { $set: { Reviewed: 'Yes' } },
+            { new: true }  // Returns the updated document
         );
 
         if (!user) {
@@ -85,6 +93,26 @@ ex.get('/reviewed/:Id', async function(req, res) {
         console.error(error);
         res.status(500).send('Internal Server Error');
     }
+});
+
+// Admin login route with explicit error handling
+ex.post('/admin/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Authentication Error');
+        }
+        if (!user) {
+            return res.redirect('/admin');
+        }
+        req.logIn(user, (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Login Failed');
+            }
+            return res.redirect('/admin/dashboard');
+        });
+    })(req, res, next);
 });
 
 ex.post('/admin/login', passport.authenticate('local', {
