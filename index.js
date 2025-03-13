@@ -110,23 +110,29 @@ ex.get("/reg/:name/:email/:number", async (req, res) => {
             number: req.params.number
         });
 
+        // Uncomment this if you want to send an email
         // const mailOptions = {
         //     from: 'gkutsavpalaceoffical@gmail.com',
         //     to: 'gkutsavpalaceoffical@gmail.com',
-        //     subject: `user name:${req.params.name}`,
-        //     text: `${req.params.name} send request his email is ${req.params.email} and his phone number is ${req.params.number} review it!`
+        //     subject: `User Registration: ${req.params.name}`,
+        //     text: `${req.params.name} sent a request. Email: ${req.params.email}, Phone Number: ${req.params.number}. Please review it!`
         // };
 
-        // transporter.sendMail(mailOptions, (error, info) => {
+        // transporter.sendMail(mailOptions, async (error, info) => {
         //     if (error) {
         //         console.error('Error sending email:', error);
-        //         res.status(500).send('Error sending email');
+        //         return res.status(500).send('Error sending email');
         //     } else {
         //         console.log('Email sent:', info.response);
-        //         const savedUser = newUser.save();
+        //         const savedUser = await newUser.save();
         //         res.send(savedUser);
         //     }
         // });
+
+        // If you’re not sending emails, just save the user directly
+        const savedUser = await newUser.save();
+        res.send(savedUser);
+
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
