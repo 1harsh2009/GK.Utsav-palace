@@ -69,17 +69,11 @@ ex.get("/admin", (req, res) => {
     res.render('loginP');
 });
 
-ex.get('/reviewed/:Id', async function (req, res) {
+ex.get('/reviewed/:Id', async function(req, res) {
     try {
-        // Validate ObjectId
-        if (!ObjectId.isValid(req.params.Id)) {
-            return res.status(400).send('Invalid User ID');
-        }
-
         const user = await User.findOneAndUpdate(
             { _id: req.params.Id },
-            { $set: { Reviewed: 'Yes' } },
-            { new: true }  // Returns the updated document
+            { $set: { Reviewed: 'Yes' } }
         );
 
         if (!user) {
@@ -92,6 +86,11 @@ ex.get('/reviewed/:Id', async function (req, res) {
         res.status(500).send('Internal Server Error');
     }
 });
+
+ex.post('/admin/login', passport.authenticate('local', {
+    successRedirect: '/admin/dashboard',
+    failureRedirect: '/admin',
+}));
 
 // Admin login route with explicit error handling
 ex.post('/admin/login', (req, res, next) => {
