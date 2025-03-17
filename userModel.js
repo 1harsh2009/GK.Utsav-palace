@@ -14,11 +14,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    date:{
-        type:
+    date: {
+        type: Date,
+        default: Date.now,  // Sets current date/time when a document is created
     },
-    Reviwed:{
-        type:String,
+    Reviwed: {
+        type: String,
         default: 'No'
     }
 });
