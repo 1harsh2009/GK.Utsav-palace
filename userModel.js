@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    date:{
+        type:
+    },
     Reviwed:{
         type:String,
         default: 'No'
