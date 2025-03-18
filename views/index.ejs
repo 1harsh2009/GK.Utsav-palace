@@ -64,7 +64,8 @@
           <td><%= user.email %></td>
           <td><%= user.number %></td>
           <td><%= user.Reviwed  %></td>
-          <td><%= user.date  %></td>
+          <td><%= new Date(user.date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) %></td>
+
           <td><a href="/reviewed/<%= user._id%>">Review</a></td>
         </tr>
       <% }); %>
