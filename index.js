@@ -1,3 +1,4 @@
+require('dotenv').config(); // MUST be the first line
 const express = require("express");
 const mongoose = require("mongoose");
 const ex = express();
@@ -17,6 +18,18 @@ mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
+
+const { put } = require('@vercel/blob');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
+// ... existing express and passport setup ...
+
+/**
+ * Upload Route
+ * This automatically uses process.env.BLOB_READ_WRITE_TOKEN
+ */
+
 
 ex.use(express.static(path.join(__dirname, 'pages')));
 ex.use(express.urlencoded({ extended: true }));
@@ -64,6 +77,20 @@ ex.use(passport.session());
 //         pass: 'harsh-123@'
 //     }
 // });
+const { list } = require('@vercel/blob');
+ex.get("/gallery", async (req, res) => {
+    try {
+        // Fetch the list of all blobs
+        // 'limit' is optional (defaults to 1000)
+        const { blobs } = await list();
+
+        // Render a page or send the JSON data
+        res.render("gallery", { blobs });
+    } catch (error) {
+        console.error("Error fetching blob list:", error);
+        res.status(500).send("Could not retrieve files.");
+    }
+});
 
 ex.get("/admin", (req, res) => {
     res.render('loginP');
@@ -151,6 +178,30 @@ ex.get("/admin/dashboard", isLoggedIn, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
+    }
+});
+
+ex.post('/admin/upload', isLoggedIn, upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).send('No file selected.');
+        }
+
+        // Uploading to Vercel Blob
+        const blob = await put(req.file.originalname, req.file.buffer, {
+            access: 'public',
+            // The token is pulled from process.env.BLOB_READ_WRITE_TOKEN by default
+        });
+
+        // You can now save blob.url to your MongoDB
+        res.status(200).json({
+            message: "Upload Successful",
+            imageUrl: blob.url 
+        });
+
+    } catch (error) {
+        console.error("Upload Error:", error);
+        res.status(500).send("Server Error during upload");
     }
 });
 

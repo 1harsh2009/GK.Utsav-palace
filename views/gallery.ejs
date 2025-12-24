@@ -57,10 +57,13 @@
             <li class="one_half first"><a href="./images/demo/gallery/img-gk-3.jpg"><img src="./images/demo/gallery/img-gk-3.jpg" alt=""></a></li>
             <li class="one_half"><a href="./images/demo/gallery/img-gk-6.jpg"><img src="./images/demo/gallery/img-gk-6.jpg" alt=""></a></li>
             <li class="one_half first"><a href="./images/demo/gallery/img-gk-7.jpg"><img src="./images/demo/gallery/img-gk-7.jpg" alt=""></a></li>
-            <li class="one_half "><a href="./images/demo/gallery/vedio-gk-1.mp4"><video loop autoplay muted sr="./images/demo/gallery/vedio-gk-1.mp4" alt=""></a></li>
+            <% blobs.forEach(file => { %>
+              <li class="one_half"><a href="<%= file.url %>"><img src="<%= file.url %>" alt=""></a></li>
+            <% }); %>
             
           </ul>
-          
+          <ul class="nospace clear">
+            
         </figure>
       </div>
       <!-- ################################################################################################ -->
