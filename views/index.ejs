@@ -6,6 +6,10 @@
   <title>Admin Dashboard</title>
   <style>
     /* Add your styles here */
+    
+        .upload-card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; max-width: 400px; }
+        #progress-bar { width: 0%; height: 10px; background: blue; display: none; margin-top: 10px; }
+    
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f4f4;
@@ -73,10 +77,48 @@
     </tbody>
   </table>
 </div>
-<form action="/admin/upload" method="POST" enctype="multipart/form-data">
-  <input type="file" name="image" accept="image/*" required />
-  <button type="submit">Upload Image</button>
-</form>
+<div class="upload-card">
+        <h3>Upload Media</h3>
+        <input type="file" id="file-input" accept="video/*,image/*" />
+        <button id="upload-btn">Upload to Gallery</button>
+        
+        <div id="progress-bar"></div>
+        <p id="status-text"></p>
+    </div>
+
+    <script type="module">
+        import { upload } from 'https://esm.sh/@vercel/blob/client';
+
+        const btn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        const statusText = document.getElementById('status-text');
+
+        btn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return alert("Select a file first!");
+
+            statusText.innerText = "Initializing upload...";
+            btn.disabled = true;
+
+            try {
+                // This calls your /admin/upload route on the server for a token
+                const newBlob = await upload(file.name, file, {
+                    access: 'public',
+                    handleUploadUrl: '/admin/upload', 
+                });
+
+                statusText.innerHTML = `Success! <a href="${newBlob.url}" target="_blank">View File</a>`;
+                
+                // OPTIONAL: Refresh page after 2 seconds to show new file in gallery
+                setTimeout(() => { location.reload(); }, 2000);
+
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = "Upload failed: " + error.message;
+                btn.disabled = false;
+            }
+        });
+    </script>
 <script>
   // Function to open the review modal
   function openReviewModal(userName) {

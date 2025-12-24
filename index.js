@@ -1,4 +1,4 @@
-require('dotenv').config(); // MUST be the first line
+require('dotenv').config(); 
 const express = require("express");
 const mongoose = require("mongoose");
 const ex = express();
@@ -7,34 +7,23 @@ const User = require("./userModel");
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session');
-const nodemailer = require('nodemailer');
-
-ex.set('views', path.join(__dirname, 'views'));
-ex.set('view engine', 'ejs');
-
-const uri = "mongodb+srv://harshuu001:harsh@cluster0.flyzgd7.mongodb.net/your_database_name?retryWrites=true&w=majority";
-
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
-
-const { put } = require('@vercel/blob');
+const { put, list } = require('@vercel/blob');
+const { handleUpload } = require('@vercel/blob/client');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ... existing express and passport setup ...
+// 1. DATABASE CONNECTION
+const uri = process.env.MONGODB_URI || "mongodb+srv://harshuu001:harsh@cluster0.flyzgd7.mongodb.net/your_database_name?retryWrites=true&w=majority";
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-/**
- * Upload Route
- * This automatically uses process.env.BLOB_READ_WRITE_TOKEN
- */
-
-
+// 2. APP SETTINGS
+ex.set('views', path.join(__dirname, 'views'));
+ex.set('view engine', 'ejs');
 ex.use(express.static(path.join(__dirname, 'pages')));
 ex.use(express.urlencoded({ extended: true }));
 ex.use(express.json());
 
+// 3. SESSION & PASSPORT (MUST BE BEFORE ROUTES)
 ex.use(session({
     secret: 'your-secret-key',
     resave: false,
@@ -45,164 +34,80 @@ passport.use(new LocalStrategy(async (username, password, done) => {
     try {
         const AdminName = 'Admin';
         const AdminPass = 'Admin123';
-
-        if (username === AdminName) {
-            if (password === AdminPass) {
-                return done(null, { username: AdminName });
-            }
+        if (username === AdminName && password === AdminPass) {
+            return done(null, { username: AdminName });
         }
-
         return done(null, false, { message: 'Invalid credentials' });
-
-    } catch (err) {
-        return done(err);
-    }
+    } catch (err) { return done(err); }
 }));
 
-passport.serializeUser((user, done) => {
-    done(null, user.username);
-});
-
-passport.deserializeUser((username, done) => {
-    done(null, { username });
-});
+passport.serializeUser((user, done) => done(null, user.username));
+passport.deserializeUser((username, done) => done(null, { username }));
 
 ex.use(passport.initialize());
 ex.use(passport.session());
 
-// const transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     auth: {
-//         user: 'gkutsavpalaceoffical@gmail.com',
-//         pass: 'harsh-123@'
-//     }
-// });
-const { list } = require('@vercel/blob');
-ex.get("/gallery", async (req, res) => {
-    try {
-        // Fetch the list of all blobs
-        // 'limit' is optional (defaults to 1000)
-        const { blobs } = await list();
+// 4. MIDDLEWARE
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated()) return next();
+    res.redirect('/admin');
+}
 
-        // Render a page or send the JSON data
-        res.render("gallery", { blobs });
-    } catch (error) {
-        console.error("Error fetching blob list:", error);
-        res.status(500).send("Could not retrieve files.");
-    }
-});
+// 5. ROUTES
 
-ex.get("/admin", (req, res) => {
-    res.render('loginP');
-});
-
-const { ObjectId } = mongoose.Types;
-
-ex.get('/reviewed/:Id', async function (req, res) {
-    try {
-        // Validate ObjectId
-        if (!ObjectId.isValid(req.params.Id)) {
-            return res.status(400).send('Invalid User ID');
-        }
-
-        const user = await User.findOneAndUpdate(
-            { _id: req.params.Id },
-            { $set: { Reviwed: 'Yes' } },
-            { new: true }  // Returns the updated document
-        );
-
-        if (!user) {
-            return res.status(404).send('User not found');
-        }
-
-        res.redirect('/admin/dashboard');
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-// Admin login route with explicit error handling
-ex.post('/admin/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Authentication Error');
-        }
-        if (!user) {
-            return res.redirect('/admin');
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).send('Login Failed');
-            }
-            return res.redirect('/admin/dashboard');
-        });
-    })(req, res, next);
-});
+// --- Auth Routes ---
+ex.get("/admin", (req, res) => res.render('loginP'));
 
 ex.post('/admin/login', passport.authenticate('local', {
     successRedirect: '/admin/dashboard',
     failureRedirect: '/admin',
 }));
 
-// Admin login route with explicit error handling
-ex.post('/admin/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Authentication Error');
-        }
-        if (!user) {
-            return res.redirect('/admin');
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).send('Login Failed');
-            }
-            return res.redirect('/admin/dashboard');
-        });
-    })(req, res, next);
-});
-ex.post('/admin/login', passport.authenticate('local', {
-    successRedirect: '/admin/dashboard',
-    failureRedirect: '/admin',
-}));
-
+// --- Dashboard & Gallery ---
 ex.get("/admin/dashboard", isLoggedIn, async (req, res) => {
     try {
         const users = await User.find();
         res.render("index", { users });
+    } catch (error) { res.status(500).send("Error fetching users"); }
+});
+
+ex.get("/gallery", async (req, res) => {
+    try {
+        const { blobs } = await list();
+        res.render("gallery", { blobs });
+    } catch (error) { res.status(500).send("Error fetching gallery"); }
+});
+
+// --- Upload Logic (Client-Side Token) ---
+ex.post('/admin/upload', async (req, res) => {
+    try {
+        const jsonResponse = await handleUpload({
+            body: req.body,
+            request: req,
+            onBeforeGenerateToken: async (pathname) => {
+                if (!req.isAuthenticated()) throw new Error('Unauthorized');
+                return {
+                    allowedContentTypes: ['video/mp4', 'image/jpeg', 'image/png'],
+                    tokenPayload: JSON.stringify({ userId: 'admin' }),
+                };
+            },
+            onUploadCompleted: async (payload) => {
+                console.log('Upload completed in Vercel:', payload);
+            },
+        });
+        return res.status(200).json(jsonResponse);
     } catch (error) {
-        console.error(error);
-        res.status(500).send("Internal Server Error");
+        return res.status(400).json({ error: error.message });
     }
 });
 
-ex.post('/admin/upload', isLoggedIn, upload.single('image'), async (req, res) => {
+// --- User Actions ---
+ex.get('/reviewed/:Id', isLoggedIn, async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).send('No file selected.');
-        }
-
-        // Uploading to Vercel Blob
-        const blob = await put(req.file.originalname, req.file.buffer, {
-            access: 'public',
-            // The token is pulled from process.env.BLOB_READ_WRITE_TOKEN by default
-        });
-
-        // You can now save blob.url to your MongoDB
-        res.status(200).json({
-            message: "Upload Successful",
-            imageUrl: blob.url 
-        });
-
-    } catch (error) {
-        console.error("Upload Error:", error);
-        res.status(500).send("Server Error during upload");
-    }
+        if (!mongoose.Types.ObjectId.isValid(req.params.Id)) return res.status(400).send('Invalid ID');
+        await User.findByIdAndUpdate(req.params.Id, { $set: { Reviwed: 'Yes' } });
+        res.redirect('/admin/dashboard');
+    } catch (error) { res.status(500).send('Server Error'); }
 });
 
 ex.get("/reg/:name/:email/:number", async (req, res) => {
@@ -212,43 +117,9 @@ ex.get("/reg/:name/:email/:number", async (req, res) => {
             email: req.params.email,
             number: req.params.number
         });
-
-        // Uncomment this if you want to send an email
-        // const mailOptions = {
-        //     from: 'gkutsavpalaceoffical@gmail.com',
-        //     to: 'gkutsavpalaceoffical@gmail.com',
-        //     subject: `User Registration: ${req.params.name}`,
-        //     text: `${req.params.name} sent a request. Email: ${req.params.email}, Phone Number: ${req.params.number}. Please review it!`
-        // };
-
-        // transporter.sendMail(mailOptions, async (error, info) => {
-        //     if (error) {
-        //         console.error('Error sending email:', error);
-        //         return res.status(500).send('Error sending email');
-        //     } else {
-        //         console.log('Email sent:', info.response);
-        //         const savedUser = await newUser.save();
-        //         res.send(savedUser);
-        //     }
-        // });
-
-        // If you’re not sending emails, just save the user directly
         const savedUser = await newUser.save();
         res.send(savedUser);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Internal Server Error");
-    }
+    } catch (error) { res.status(500).send("Registration Error"); }
 });
 
-function isLoggedIn(req, res, next) {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    res.redirect('/admin');
-}
-
-ex.listen(3000, () => {
-    console.log("server running on port 3000");
-});
+ex.listen(3000, () => console.log("Server running on port 3000"));

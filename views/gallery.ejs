@@ -55,12 +55,34 @@
             <li class="one_half first"><a href="./images/demo/gallery/img-gk-4.jpg"><img src="./images/demo/gallery/img-gk-4.jpg" alt=""></a></li>
             <li class="one_half"><a href="./images/demo/gallery/img-gk-5.jpg"><img src="./images/demo/gallery/img-gk-5.jpg" alt=""></a></li>
             <li class="one_half first"><a href="./images/demo/gallery/img-gk-3.jpg"><img src="./images/demo/gallery/img-gk-3.jpg" alt=""></a></li>
-            <li class="one_half"><a href="./images/demo/gallery/img-gk-6.jpg"><img src="./images/demo/gallery/img-gk-6.jpg" alt=""></a></li>
-            <li class="one_half first"><a href="./images/demo/gallery/img-gk-7.jpg"><img src="./images/demo/gallery/img-gk-7.jpg" alt=""></a></li>
-            <% blobs.forEach(file => { %>
-              <li class="one_half"><a href="<%= file.url %>"><img src="<%= file.url %>" alt=""></a></li>
-            <% }); %>
             
+            <li class="one_half "><a href="./images/demo/gallery/img-gk-7.jpg"><img src="./images/demo/gallery/img-gk-7.jpg" alt=""></a></li>
+            <li class="one_half first"><a href="./images/demo/gallery/img-gk-6.jpg"><img src="./images/demo/gallery/img-gk-6.jpg" alt=""></a></li>
+            <% if (blobs && blobs.length > 0) { %>
+              
+              <% blobs.forEach((file, index) => { %>
+                <% 
+                  
+                  let classList = "one_half";
+                  if (index % 2 === 0) { classList += " first"; } 
+                %>
+
+                <li class=" one_half">
+                    <% if (file.url.endsWith('.mp4') || file.url.endsWith('.mov')) { %>
+                      <video style="width:100%; height:auto;" controls>
+                        <source src="<%= file.url %>" type="video/mp4">
+                      </video>
+                    <% } else { %>
+                      <img src="<%= file.url %>" style="width:100%; height:auto;" alt="Gallery Image" />
+                    <% } %>
+                </li>
+              <% }) %>
+
+            <% } else { %>
+              <div class="one_half first">
+                <p>No images or videos found in the storage.</p>
+              </div>
+  <% } %>
           </ul>
           <ul class="nospace clear">
             
